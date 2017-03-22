@@ -1,0 +1,30 @@
+# Step 1: Obtain an API key
+Visit Bungie's developer portal at https://www.bungie.net/en/Application and create a new app to obtain an API key
+
+# Step 2: Obtain the membershipType, destinymembershipId, and characterId for the profile you are interested in
+This is most easily accomplished by logging into bungit.net, visiting any portion of the "my legend" links, and copying the last three numbers in the URL
+
+# Step 3: 
+
+# Step 3: Execute the following in R to obtain a file containing a list (in a .txt file) of all names of all opponents encountered by the given character in the past "X" matches (divisible by 100)
+
+install.packages(c("magrittr", "httr", "xml2"))
+library(magrittr)
+library(httr)
+library(xml2)
+
+key <- "API key obtained in Step 1"
+
+for (k in 0:"X/100 -1") {
+  print(k) \\keeps track of progress; may take a while\\
+  ActivityList <- GET(paste("http://www.bungie.net/platform/destiny/stats/activityhistory/"membershipType"/"destinyMembershipId"/"characterId/?mode=5&page=", k, "&count=100", sep=""), add_headers("X-API-Key"=key)) %>% content("parsed")
+  for (i in 1:100) {
+    thisRoundId <- ActivityList$Response$data$activities[[i]]$activityDetails$instanceId
+    thisRound <- GET(paste("http://www.bungie.net/Platform/Destiny/Stats/PostGameCarnageReport/", thisRoundId, sep=""), add_headers("X-API-Key" = key)) %>% content("parsed")
+    for (j in 1:length(thisRound$Response$data$entries)) {
+      if (!is.null(thisRound$Response$data$entries[[j]]$player$bungieNetUserInfo$displayName)) {
+        write(unlist(thisRound$Response$data$entries[[j]]$player$bungieNetUserInfo$displayName), file = "fileName.txt", append=TRUE)
+      }
+    }
+  }
+}
